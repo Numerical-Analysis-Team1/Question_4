@@ -14,8 +14,10 @@ def Drive(pol, big_range, epsilon, step):
     Solver(pol, big_range, epsilon, step, Newton_Raphson)
     print("\n\n")
     print("---------------Simpson Integral---------------")
-    Integration_Simpson_Method(pol, 20, (0, 1))
+    Integration_Simpson_Method(pol, 10, (0, 1))
+    print("\n\n")
     print("---------------Romberg Integral---------------")
+    Integration_Romberg_method(pol, 10, (0,1))
 
 
 def Solver(pol, big_range, epsilon, step, method):
@@ -80,12 +82,14 @@ def Newton_Raphson(pol, little_range, epsilon):
     x1 = sum(little_range) / 2
     x2 = x1 - f(x1) / df(x1)
     counter = 1
+    print(x2)
 
     while abs(x2 - x1) > epsilon:
+        counter += 1
         x1 = x2
         x2 = (x1 - f(x1) / df(x1))
         print(x2)
-        counter += 1
+
 
     return x2, counter
 
@@ -95,6 +99,7 @@ def secant_method(pol, little_range, epsilon):
     x1, x2 = little_range
     x3 = (x1 * f(x2) - x2 * f(x1)) / (f(x2) - f(x1))
     counter = 1
+    print(x3)
 
     while abs(x3 - x2) > epsilon:
         x1 = x2
@@ -122,10 +127,39 @@ def Integration_Simpson_Method(f, n, rng):
     print("Integration Value = " + str(format1((h / 3) * s)))
 
 
+def trapezoidal_method(f, n, rng):
+    a, b = rng
+    h = (b - a) / n
+    x = a
+    s = 0
+
+    for i in range(n):
+        s += (f(x) + f(x + h)) / 2
+        x += h
+
+    return float(s * h)
+
+
+def Integration_Romberg_method(f, n, rng):
+    f = lambdify(x, f)
+    r = [[0 for j in range(i)] for i in range(1, n + 1)]
+
+    for i in range(0, n):
+        r[i][0] = trapezoidal_method(f, i + 1, rng)
+
+    for i in range(1, n):
+        for j in range(1, i + 1):
+            r[i][j] = r[i][j - 1] + 1 / (4 ** j - 1) * (r[i][j - 1] - r[i - 1][j - 1])
+
+    for row in r:
+        print(row)
+    print("Integration Value = " + str(format1(r[n - 1][n - 1])))
+
+
 def format1(number):
     t = round(number, 3)
     now = datetime.datetime.now()
-    s = str(t) + "00000" + str(now.day)  + str(now.hour) + str(now.minute)
+    s = str(t) + "00000" + str(now.day) + str(now.hour) + str(now.minute)
     new = float(s)
     return new
 
@@ -136,7 +170,5 @@ f = lambdify(x, user_func)
 user_range = (-1, 1.5)
 user_epsilon = 0.0001
 user_step = 0.05
-
-print(format1(-0.234567))
 
 Drive(user_func, user_range, user_epsilon, user_step)
